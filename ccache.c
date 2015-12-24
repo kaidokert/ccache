@@ -1012,10 +1012,28 @@ to_cache(struct args *args)
 	if (conf->run_second_cpp) {
 		args_add(args, input_file);
 	} else {
+#if 0
 		args_add(args, i_tmpfile);
+#else
+		char p[1024];
+		char * cmdline = x_malloc( strlen(i_tmpfile) + 30);
+		sprintf(cmdline,"cygpath -m %s",i_tmpfile);
+		FILE* file = popen(cmdline, "r");
+		fgets(p, sizeof(p), file);
+		pclose(file);
+		p[strlen(p)-1] = '\0';
+		args_add(args, p);
+		cc_log("cygpath rewrote i_tmpfile %s with %s",i_tmpfile, p);
+		free(cmdline);
+#endif
 	}
 
 	cc_log("Running real compiler");
+	{
+		char * arg_str = args_to_string(args);
+		cc_log("Params: %s",arg_str);
+		free(arg_str);
+	}
 	status = execute(args->argv, tmp_stdout_fd, tmp_stderr_fd, &compiler_pid);
 	args_pop(args, 3);
 
